@@ -1,9 +1,8 @@
 # Contributing
 
-We publish this repository from Itoflow's own codebase. Each change there to
-`main` or `develop` replaces the files on the matching branch here, then
-publishes a release. A commit made only in this repository is overwritten by
-the next publish.
+We publish this repository from Itoflow's own codebase. Each release there
+replaces the files on `main` here and publishes a GitHub release. A commit made
+only in this repository is overwritten by the next publish.
 
 ## Report a problem or suggest a change
 

@@ -2,7 +2,8 @@
 
 Connect your AI agent to [Itoflow](https://itoflow.ai/) for investment
 research, portfolios, strategies and monitors. The plugin adds the Itoflow MCP
-server and two skills to Claude, ChatGPT, Codex, Gemini CLI and other agents.
+server and two skills to Claude, Codex, Gemini CLI and other agents. ChatGPT
+connects to the same server.
 
 | Skill | Use it to |
 | --- | --- |
@@ -126,12 +127,8 @@ access your session already has and never sends credentials to Itoflow.
 
 ## Releases
 
-| Branch | Versions | Install from |
-| --- | --- | --- |
-| `main` | Stable, such as `0.3.0` | `itoflow/skills`, as above |
-| `develop` | Preview, such as `0.3.0-develop.h1a2b3c4d5` | `itoflow/skills#develop` in Claude, `--ref develop` in Codex and Gemini CLI |
-
-Every new plugin version on either branch publishes a
+Installing from `itoflow/skills` gives you the latest release on `main`. Every
+new plugin version publishes a
 [GitHub release](https://github.com/itoflow/skills/releases) with:
 
 - `itoflow-<version>.tar.gz`, the plugin as a local marketplace.
@@ -139,7 +136,7 @@ Every new plugin version on either branch publishes a
   Codex plugin directory accepts.
 - A `.sha256` checksum for each file.
 
-The latest stable archive is always at
+The latest archive is always at
 `https://github.com/itoflow/skills/releases/latest/download/itoflow.tar.gz`.
 
 To install from an archive, extract it and add its `itoflow` folder:
@@ -153,9 +150,6 @@ claude plugin install itoflow@itoflow
 
 For Codex, run `codex plugin marketplace add ./itoflow`, then
 `codex plugin add itoflow@itoflow`. Keep the folder in place after you install.
-
-Both channels use the same marketplace name, so remove one before you add the
-other.
 
 ## Test a local copy
 

@@ -146,10 +146,9 @@ const manifests = {
   Gemini: gemini,
 };
 
-// develop publishes prereleases such as 0.3.0-develop.h1a2b3c4d5.
 check(
-  /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?$/.test(claude.version ?? ""),
-  "version must be semver",
+  /^\d+\.\d+\.\d+$/.test(claude.version ?? ""),
+  "version must be a plain semver such as 1.2.3",
 );
 for (const [client, manifest] of Object.entries(manifests)) {
   check(manifest.name === name, `${client} manifest name must be ${name}`);

@@ -1,11 +1,9 @@
 name: Release
 
-# Each push to main or develop publishes the plugin archive as a release.
-# main releases plain versions (itoflow--v0.3.0) and marks them latest.
-# develop releases prereleases (itoflow--v0.3.0-develop.h1a2b3c4d5).
+# Each new plugin version on main is published as a release, itoflow--v<version>.
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
 
 permissions:
   contents: write
@@ -29,13 +27,11 @@ jobs:
       - name: Check manifests, skills and published content
         run: node scripts/validate.mjs
 
-      - name: Check the version suits the branch
+      - name: Check the version
         run: |
           version=$(node -p "require('./.claude-plugin/plugin.json').version")
-          case "$GITHUB_REF_NAME:$version" in
-            main:*-*) echo "::error::main needs a plain version, not $version"; exit 1 ;;
-            develop:*-develop.*) ;;
-            develop:*) echo "::error::develop needs a -develop prerelease version, not $version"; exit 1 ;;
+          case "$version" in
+            *-*) echo "::error::Releases need a plain version, not $version"; exit 1 ;;
           esac
 
       - name: Build archive
@@ -75,21 +71,26 @@ jobs:
           ARCHIVE: ${{ steps.build.outputs.archive }}
           OPENAI_ZIP: ${{ steps.build.outputs.openai }}
         run: |
-          # A plugin change always carries a new version, so an existing tag
+          # A plugin change always carries a new version, so a published tag
           # means this push changed only repository files such as the README.
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "::notice::$TAG is already released; nothing to publish."
-            exit 0
+          # A draft is what an interrupted upload leaves; replace it.
+          if state=$(gh release view "$TAG" --json isDraft -q .isDraft 2>/dev/null); then
+            if [ "$state" = false ]; then
+              echo "::notice::$TAG is already released; nothing to publish."
+              exit 0
+            fi
+            echo "::warning::Replacing the unfinished draft release $TAG."
+            gh release delete "$TAG" --yes
           fi
 
           notes="Install from GitHub with the commands in the README, or download $(basename "$ARCHIVE") and follow its archive steps. $(basename "$OPENAI_ZIP") is the ChatGPT and Codex directory package."
-          files=("$ARCHIVE" "$ARCHIVE.sha256" "$OPENAI_ZIP" "$OPENAI_ZIP.sha256")
-          if [ "$GITHUB_REF_NAME" = main ]; then
-            # A fixed name keeps releases/latest/download/itoflow.tar.gz working.
-            cp "$ARCHIVE" "$RUNNER_TEMP/itoflow.tar.gz"
-            gh release create "$TAG" "${files[@]}" "$RUNNER_TEMP/itoflow.tar.gz" \
-              --target "$GITHUB_SHA" --title "Itoflow plugin $VERSION" --notes "$notes" --latest
-          else
-            gh release create "$TAG" "${files[@]}" \
-              --target "$GITHUB_SHA" --title "Itoflow plugin $VERSION (preview)" --notes "$notes" --prerelease
-          fi
+          # Only the current head of main becomes latest, so a re-run of an
+          # older build cannot move releases/latest/download/itoflow.tar.gz back.
+          head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" -q .object.sha)
+          latest=false
+          [ "$head" = "$GITHUB_SHA" ] && latest=true
+          # A fixed name keeps releases/latest/download/itoflow.tar.gz working.
+          cp "$ARCHIVE" "$RUNNER_TEMP/itoflow.tar.gz"
+          gh release create "$TAG" "$ARCHIVE" "$ARCHIVE.sha256" "$OPENAI_ZIP" "$OPENAI_ZIP.sha256" \
+            "$RUNNER_TEMP/itoflow.tar.gz" \
+            --target "$GITHUB_SHA" --title "Itoflow plugin $VERSION" --notes "$notes" --latest="$latest"
