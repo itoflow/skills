@@ -42,8 +42,8 @@ jobs:
         env:
           ARCHIVE: ${{ steps.build.outputs.archive }}
         run: |
-          mkdir "$RUNNER_TEMP/extracted"
-          tar -xzf "$ARCHIVE" -C "$RUNNER_TEMP/extracted"
+          mkdir -p "$RUNNER_TEMP/extracted/itoflow"
+          unzip -q -d "$RUNNER_TEMP/extracted/itoflow" "$ARCHIVE"
           cp scripts/validate.mjs "$RUNNER_TEMP/validate.mjs"
           node "$RUNNER_TEMP/validate.mjs" "$RUNNER_TEMP/extracted/itoflow"
           npx -y @anthropic-ai/claude-code@2.1.292 plugin validate --strict "$RUNNER_TEMP/extracted/itoflow"
@@ -62,6 +62,13 @@ jobs:
             echo "::error::The OpenAI package must hold only the Codex format"
             exit 1
           fi
+
+      - name: Check the skill packages
+        run: |
+          # Apps that upload one skill expect SKILL.md at the root of the ZIP.
+          for zip in "$RUNNER_TEMP"/dist/*-skill-*.zip; do
+            unzip -Z1 "$zip" | grep -qx SKILL.md || { echo "::error::$(basename "$zip") has no SKILL.md at its root"; exit 1; }
+          done
 
       - name: Publish release
         env:
@@ -83,14 +90,19 @@ jobs:
             gh release delete "$TAG" --yes
           fi
 
-          notes="Install from GitHub with the commands in the README, or download $(basename "$ARCHIVE") and follow its archive steps. $(basename "$OPENAI_ZIP") is the ChatGPT and Codex directory package."
+          notes="Install from GitHub with the commands in the README. $(basename "$ARCHIVE") is the plugin with every client's manifest; unzipped, it is also a local marketplace. $(basename "$OPENAI_ZIP") is for ChatGPT's Upload plugin archive, and each -skill- ZIP holds one skill for apps that upload skills."
           # Only the current head of main becomes latest, so a re-run of an
-          # older build cannot move releases/latest/download/itoflow.tar.gz back.
+          # older build cannot move releases/latest/download/itoflow.zip back.
           head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" -q .object.sha)
           latest=false
           [ "$head" = "$GITHUB_SHA" ] && latest=true
-          # A fixed name keeps releases/latest/download/itoflow.tar.gz working.
-          cp "$ARCHIVE" "$RUNNER_TEMP/itoflow.tar.gz"
-          gh release create "$TAG" "$ARCHIVE" "$ARCHIVE.sha256" "$OPENAI_ZIP" "$OPENAI_ZIP.sha256" \
-            "$RUNNER_TEMP/itoflow.tar.gz" \
+          # Every versioned file, plus a copy without the version, such as
+          # itoflow.zip, so releases/latest/download/<name> links keep working.
+          files=("$RUNNER_TEMP"/dist/*)
+          mkdir "$RUNNER_TEMP/latest"
+          for file in "$RUNNER_TEMP"/dist/*.zip; do
+            name=$(basename "$file")
+            cp "$file" "$RUNNER_TEMP/latest/${name/-$VERSION/}"
+          done
+          gh release create "$TAG" "${files[@]}" "$RUNNER_TEMP"/latest/* \
             --target "$GITHUB_SHA" --title "Itoflow plugin $VERSION" --notes "$notes" --latest="$latest"

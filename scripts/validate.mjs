@@ -25,20 +25,27 @@ const publicHosts = new Set([
   "agentskills.io",
   "modelcontextprotocol.io",
   "code.claude.com",
+  "claude.com",
   "support.claude.com",
   "claude.ai",
   "developers.openai.com",
+  "help.openai.com",
+  "learn.chatgpt.com",
+  "cursor.com",
   "chatgpt.com",
   "geminicli.com",
   "skills.sh",
   "www.apache.org",
   "www.w3.org",
+  "docs.github.com",
+  "support.google.com",
 ]);
 const publicGitHubOwners = new Set([
   "itoflow",
   "agentplugins",
   "vercel-labs",
   "google-gemini",
+  "microsoft",
 ]);
 
 const secretPatterns = [
@@ -310,7 +317,9 @@ for (const path of publishedFiles()) {
       `${path}: URL host ${host} is not on the public list`,
     );
   }
-  for (const [, owner] of text.matchAll(/github\.com\/([A-Za-z0-9_.-]+)/g)) {
+  for (const [, owner] of text.matchAll(
+    /https?:\/\/github\.com\/([A-Za-z0-9_.-]+)/g,
+  )) {
     check(
       publicGitHubOwners.has(owner),
       `${path}: GitHub link to ${owner} is not on the public list`,

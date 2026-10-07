@@ -1,10 +1,13 @@
 // Builds the release files from the current commit.
 // Usage: node scripts/package.mjs <output-dir>
 //
-// itoflow-<version>.tar.gz  One `itoflow/` folder that works as a local
-//                           marketplace for Claude Code and Codex.
-// itoflow-<version>-openai.zip  The plugin in Codex format, ready to submit
-//                           to the ChatGPT and Codex plugin directory.
+// itoflow-<version>.zip    The plugin with every client's manifest. Unzipped,
+//                           it is also a local marketplace for Claude Code,
+//                           Codex and Copilot CLI.
+// itoflow-<version>-openai.zip  The plugin in Codex format, for ChatGPT's
+//                           Upload plugin archive and the plugin directory.
+// itoflow-<version>-skill-<name>.zip  One skill with SKILL.md at the root,
+//                           for apps that upload skills one at a time.
 // In GitHub Actions it also writes step outputs.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -14,6 +17,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   writeFileSync,
 } from "node:fs";
 import { basename, join, resolve } from "node:path";
@@ -43,8 +47,8 @@ const pluginPaths = [
 ];
 const builds = {
   archive: {
-    file: join(outputDir, `${name}-${version}.tar.gz`),
-    args: ["--format=tar.gz", `--prefix=${name}/`],
+    file: join(outputDir, `${name}-${version}.zip`),
+    args: ["--format=zip"],
     paths: [
       "README.md",
       "LICENSE",
@@ -61,18 +65,26 @@ const builds = {
     paths: [".codex-plugin", ".mcp.json", "assets", "skills"],
   },
 };
+for (const skill of readdirSync(join(root, "skills"), {
+  withFileTypes: true,
+})) {
+  if (!skill.isDirectory()) continue;
+  builds[`skill_${skill.name.replaceAll("-", "_")}`] = {
+    file: join(outputDir, `${name}-${version}-skill-${skill.name}.zip`),
+    args: ["--format=zip"],
+    // Archiving the skill's tree puts its SKILL.md at the root of the ZIP.
+    treeish: `HEAD:skills/${skill.name}`,
+  };
+}
 
 const result = { name, version, tag: `${name}--v${version}` };
-for (const [key, { file, args, paths }] of Object.entries(builds)) {
+for (const [key, { file, args, paths, treeish }] of Object.entries(builds)) {
   assert.ok(!existsSync(file), `output already exists: ${file}`);
-  execFileSync(
-    "git",
-    ["archive", ...args, `--output=${file}`, "HEAD", "--", ...paths],
-    {
-      cwd: root,
-      stdio: "inherit",
-    },
-  );
+  const source = treeish ? [treeish] : ["HEAD", "--", ...paths];
+  execFileSync("git", ["archive", ...args, `--output=${file}`, ...source], {
+    cwd: root,
+    stdio: "inherit",
+  });
   const checksum = createHash("sha256")
     .update(readFileSync(file))
     .digest("hex");

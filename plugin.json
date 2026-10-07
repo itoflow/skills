@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "itoflow",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Connect to Itoflow for investment research, portfolios and strategies, with an optional skill that lets Itoflow direct work on your own machine.",
   "author": {
     "name": "Itoflow",
