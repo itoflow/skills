@@ -1,0 +1,16 @@
+{
+  "name": "itoflow",
+  "version": "0.3.0",
+  "description": "Connect to Itoflow for investment research, portfolios and strategies, with an optional skill that lets Itoflow direct work on your own machine.",
+  "author": {
+    "name": "Itoflow",
+    "email": "support@itoflow.ai",
+    "url": "https://itoflow.ai/"
+  },
+  "homepage": "https://docs.itoflow.ai/mcp/overview",
+  "repository": "https://github.com/itoflow/skills",
+  "license": "Apache-2.0",
+  "keywords": ["investing", "portfolio", "research", "itoflow"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "itoflow",
+  "version": "0.3.0",
+  "description": "Connect to Itoflow for investment research, portfolios and strategies, with an optional skill that lets Itoflow direct work on your own machine.",
+  "author": {
+    "name": "Itoflow",
+    "email": "support@itoflow.ai",
+    "url": "https://itoflow.ai/"
+  },
+  "homepage": "https://docs.itoflow.ai/mcp/overview",
+  "repository": "https://github.com/itoflow/skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "investing",
+    "portfolio",
+    "research",
+    "itoflow"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Itoflow",
+    "shortDescription": "Investment research workflows",
+    "longDescription": "Connect to Itoflow and sign in with your Itoflow account. Use the included skills for investment research and portfolio work, or let Itoflow direct an analysis that uses the tools, code, databases and files available in your current session.",
+    "developerName": "Itoflow",
+    "category": "Finance",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://itoflow.ai/",
+    "supportURL": "https://docs.itoflow.ai/mcp/troubleshooting",
+    "privacyPolicyURL": "https://app.itoflow.ai/privacy",
+    "termsOfServiceURL": "https://app.itoflow.ai/terms",
+    "defaultPrompt": [
+      "Use Itoflow to research an investment idea",
+      "Ask Itoflow to plan local work with my installed worker skill",
+      "Review my Itoflow portfolios and strategies"
+    ],
+    "brandColor": "#21C55D",
+    "composerIcon": "./assets/logo.svg",
+    "logo": "./assets/logo.svg"
+  }
+}

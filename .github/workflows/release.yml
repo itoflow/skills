@@ -1,0 +1,95 @@
+name: Release
+
+# Each push to main or develop publishes the plugin archive as a release.
+# main releases plain versions (itoflow--v0.3.0) and marks them latest.
+# develop releases prereleases (itoflow--v0.3.0-develop.h1a2b3c4d5).
+on:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Check manifests, skills and published content
+        run: node scripts/validate.mjs
+
+      - name: Check the version suits the branch
+        run: |
+          version=$(node -p "require('./.claude-plugin/plugin.json').version")
+          case "$GITHUB_REF_NAME:$version" in
+            main:*-*) echo "::error::main needs a plain version, not $version"; exit 1 ;;
+            develop:*-develop.*) ;;
+            develop:*) echo "::error::develop needs a -develop prerelease version, not $version"; exit 1 ;;
+          esac
+
+      - name: Build archive
+        id: build
+        run: node scripts/package.mjs "$RUNNER_TEMP/dist"
+
+      - name: Check the extracted archive
+        env:
+          ARCHIVE: ${{ steps.build.outputs.archive }}
+        run: |
+          mkdir "$RUNNER_TEMP/extracted"
+          tar -xzf "$ARCHIVE" -C "$RUNNER_TEMP/extracted"
+          cp scripts/validate.mjs "$RUNNER_TEMP/validate.mjs"
+          node "$RUNNER_TEMP/validate.mjs" "$RUNNER_TEMP/extracted/itoflow"
+          npx -y @anthropic-ai/claude-code@2.1.292 plugin validate --strict "$RUNNER_TEMP/extracted/itoflow"
+
+      - name: Check the OpenAI package
+        env:
+          OPENAI_ZIP: ${{ steps.build.outputs.openai }}
+        run: |
+          # The directory accepts the Codex format only, without apps or hooks.
+          files=$(unzip -Z1 "$OPENAI_ZIP" | grep -v '/$' | sort)
+          echo "$files"
+          for required in .codex-plugin/plugin.json .mcp.json skills/itoflow/SKILL.md skills/worker/SKILL.md assets/logo.svg; do
+            grep -qx "$required" <<< "$files" || { echo "::error::$required is missing from the OpenAI package"; exit 1; }
+          done
+          if grep -E '^(plugin\.json|mcp\.json|\.app\.json|hooks/)' <<< "$files"; then
+            echo "::error::The OpenAI package must hold only the Codex format"
+            exit 1
+          fi
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.build.outputs.tag }}
+          VERSION: ${{ steps.build.outputs.version }}
+          ARCHIVE: ${{ steps.build.outputs.archive }}
+          OPENAI_ZIP: ${{ steps.build.outputs.openai }}
+        run: |
+          # A plugin change always carries a new version, so an existing tag
+          # means this push changed only repository files such as the README.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::$TAG is already released; nothing to publish."
+            exit 0
+          fi
+
+          notes="Install from GitHub with the commands in the README, or download $(basename "$ARCHIVE") and follow its archive steps. $(basename "$OPENAI_ZIP") is the ChatGPT and Codex directory package."
+          files=("$ARCHIVE" "$ARCHIVE.sha256" "$OPENAI_ZIP" "$OPENAI_ZIP.sha256")
+          if [ "$GITHUB_REF_NAME" = main ]; then
+            # A fixed name keeps releases/latest/download/itoflow.tar.gz working.
+            cp "$ARCHIVE" "$RUNNER_TEMP/itoflow.tar.gz"
+            gh release create "$TAG" "${files[@]}" "$RUNNER_TEMP/itoflow.tar.gz" \
+              --target "$GITHUB_SHA" --title "Itoflow plugin $VERSION" --notes "$notes" --latest
+          else
+            gh release create "$TAG" "${files[@]}" \
+              --target "$GITHUB_SHA" --title "Itoflow plugin $VERSION (preview)" --notes "$notes" --prerelease
+          fi

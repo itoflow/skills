@@ -1,0 +1,23 @@
+{
+  "name": "itoflow",
+  "description": "Itoflow plugins for investment research, portfolios and strategies through the Itoflow MCP server.",
+  "owner": {
+    "name": "Itoflow",
+    "email": "support@itoflow.ai"
+  },
+  "plugins": [
+    {
+      "name": "itoflow",
+      "source": "./",
+      "description": "Connect to Itoflow for investment research, portfolios and strategies, with an optional skill that lets Itoflow direct work on your own machine.",
+      "author": {
+        "name": "Itoflow"
+      },
+      "homepage": "https://docs.itoflow.ai/mcp/overview",
+      "repository": "https://github.com/itoflow/skills",
+      "license": "Apache-2.0",
+      "category": "finance",
+      "tags": ["investing", "portfolio", "research", "itoflow"]
+    }
+  ]
+}
