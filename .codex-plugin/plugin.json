@@ -1,6 +1,6 @@
 {
   "name": "itoflow",
-  "version": "0.3.1",
+  "version": "0.4.4",
   "description": "Connect to Itoflow for investment research, portfolios and strategies, with an optional skill that lets Itoflow direct work on your own machine.",
   "author": {
     "name": "Itoflow",
@@ -10,12 +10,7 @@
   "homepage": "https://docs.itoflow.ai/mcp/overview",
   "repository": "https://github.com/itoflow/skills",
   "license": "Apache-2.0",
-  "keywords": [
-    "investing",
-    "portfolio",
-    "research",
-    "itoflow"
-  ],
+  "keywords": ["investing", "portfolio", "research", "itoflow"],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
@@ -24,10 +19,7 @@
     "longDescription": "Connect to Itoflow and sign in with your Itoflow account. Use the included skills for investment research and portfolio work, or let Itoflow direct an analysis that uses the tools, code, databases and files available in your current session.",
     "developerName": "Itoflow",
     "category": "Finance",
-    "capabilities": [
-      "Interactive",
-      "Write"
-    ],
+    "capabilities": ["Interactive", "Write"],
     "websiteURL": "https://itoflow.ai/",
     "supportURL": "https://docs.itoflow.ai/mcp/troubleshooting",
     "privacyPolicyURL": "https://app.itoflow.ai/privacy",

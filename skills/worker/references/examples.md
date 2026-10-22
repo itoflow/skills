@@ -37,19 +37,23 @@ Itoflow → Local agent
 
 Local agent → Itoflow
   The synthetic table has instrument_id, market_value_usd and sector.
-  Holdings are dated 2026-09-30. All 20 values are present and in USD.
+  Holdings are dated 2026-09-30. All 20 values are present and in USD;
+  three are negative (short positions). Cash is one more row.
   Sector comes from the local instrument table; two rows have no sector.
 
 Itoflow → Local agent
   Group by sector; retain missing sectors in an "Unclassified" group.
-  Sum market_value_usd and divide each sum by the total to calculate weights.
-  Return the sector table, total value, missing-sector count and coverage.
-  Check the grouped values equal the original total and weights sum to 100%.
+  Take net asset value (NAV) as cash plus the sum of signed market values.
+  Divide each sector's signed sum by NAV for its net weight, and its sum of
+  absolute values by NAV for its gross weight.
+  Return the sector table, NAV, missing-sector count and coverage.
+  Check the grouped values equal the original total and that net weights plus
+  the cash weight sum to 100%.
 
 Local agent → Itoflow
-  I ran the query and helper. Weights sum to 100%.
+  I ran the query and helper. Net weights plus cash sum to 100%.
   These synthetic holdings are dated 2026-09-30; classifications came from
-  the local instrument table, with 98% of portfolio value classified.
+  the local instrument table, with 98% of gross exposure classified.
   Two holdings have no sector classification.
   The requested table follows in this message. The complete output is also
   in results/sector_exposure.csv on this machine; the source is unchanged.

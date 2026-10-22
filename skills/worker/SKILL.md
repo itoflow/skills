@@ -26,7 +26,7 @@ You → requested result and evidence   → Itoflow interprets and decides
 ## Connect
 
 Use the installed Itoflow MCP's native `search` and `execute` tools. Discover
-`agent.runTurn`, `agent.getTurn` and `agent.cancelTurn` through Code Mode before
+`agent.runTurn`, `agent.getTurn`, `agent.cancelTurn` and `agent.listQueue` through Code Mode before
 calling them. Follow the Research section of the `itoflow` skill
 for turn IDs, exact retries, polling, dashboard results and human-input forms.
 
