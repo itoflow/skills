@@ -147,7 +147,7 @@ MIC, or broker symbol from a ticker, company name, screenshot, or nearby
 holding.
 
 1. Resolve with the batch operation
-   (`codemode.search("resolve identifiers in bulk")`): up to 2,000 rows per
+   (`codemode.search("resolve identifiers in bulk")`): up to 3,000 rows per
    call, answered in order. Send only evidence
    that the user, file, broker export, or API supplies: an ISIN, a ticker or
    broker symbol with its exchange or MIC, or an Itoflow symbol. Keep the
@@ -267,7 +267,10 @@ means risk runs are off for this account; tell the user and start nothing.
    resolve, which the run counted as cash; `view.unmodelled` and
    `view.modelled_weight`; `view.dropped_peers` with their reasons; and every
    sentence in `summary.notes`. A `partial` run is not a full result; say what
-   it did not compute.
+   it did not compute. A saved holding with no value has `weight: null`: its
+   weight is not known, not zero. The run measures the valued lines, and the
+   book's warning says how many had no value; say that the figures describe
+   the valued lines.
 10. Tracking error, beta and active exposures to the benchmark and to each
     peer come from the run; read them, do not work them out yourself. State
     the units as the panel labels them, and report `view.as_of`.
@@ -303,8 +306,10 @@ one book, with attribution, scenarios and peers, start a risk run instead.
 3. A book is `{ label, portfolio: { portfolio_id, holdings_at } }`, the saved
    portfolio's newest snapshot on or before `holdings_at`, or
    `{ label, holdings: [{ symbol, weight }] }` under the weight rules above.
-   Labels are unique in the call. Left out, `holdings_at` is the end of each
-   date in New York, so a range follows the portfolio as it was saved. Funds
+   Labels are unique in the call. With `holdings_at` left out, a request with
+   `as_of` or `range` reads each date's end in New York, so a range follows
+   the portfolio as it was saved; a request with neither reads every book's
+   newest snapshot when the measure starts. Funds
    in a book, and the benchmark, are read through their stored holdings on or
    before each publication's model date.
 4. A year of month ends on a few books takes a minute or two; ten large books
@@ -332,7 +337,9 @@ one book, with attribution, scenarios and peers, start a risk run instead.
    share of the book's gross weight the model covers, not a share of net
    assets; `active.modelled_share_of_gross_active` is the same for the active
    book. Report `coverage.unmodelled_count` and the largest lines in
-   `coverage.unmodelled`. A date with `status: "missing"` has no publication
+   `coverage.unmodelled`. A line with `weight: null` is a saved holding with
+   no value, so its weight is not known; a book with such lines measures its
+   valued lines, and its warning says so. A date with `status: "missing"` has no publication
    of the version; it names `nearest_before` and `nearest_after`. Say which
    books came back `omitted` and why, and repeat each warning. A null
    `benchmark` on a date means no book is stored for that fund then.
