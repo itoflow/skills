@@ -247,7 +247,7 @@ means risk runs are off for this account; tell the user and start nothing.
    the next. A retry with the same key and request joins the run it started,
    up to 24 hours after that run ends. The same key with another request
    returns `409`, so use a new key for any other request.
-6. A run takes minutes, with a 20 minute deadline. Return after the start,
+6. A run takes minutes, and never more than an hour. Return after the start,
    then read it with `api.getRiskRun({ run_id })` in later `execute` calls,
    and read a `running` run again later. Do not loop inside one program. A
    finished result stays for 24 hours. If the start's answer was lost, start
@@ -313,7 +313,7 @@ one book, with attribution, scenarios and peers, start a risk run instead.
    in a book, and the benchmark, are read through their stored holdings on or
    before each publication's model date.
 4. A year of month ends on a few books takes a minute or two; ten large books
-   take several minutes, and a measure stops at 20 minutes. Return after the
+   take several minutes, and a measure never runs past an hour. Return after the
    start, then read it with `api.getRiskMeasure({ measure_id })` in later
    `execute` calls, and read a `running` measure again later; `progress`
    gives `dates_done` and `dates_total`. Do not loop inside one program.
