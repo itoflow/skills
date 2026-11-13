@@ -198,7 +198,7 @@ holding.
 
 The risk engine measures one book against a benchmark and up to 10 peer funds:
 risk, exposures, attribution, factor P&L, bets, sizing, scenarios and
-valuation. Use `api.startRiskRun`, `api.getRiskRun` and `api.cancelRiskRun`;
+valuation. Use `api.startRiskRun`, `api.getRiskRun`, `api.getRiskRunArtifact` and `api.cancelRiskRun`;
 `codemode.describe()` gives their inputs and results. A refused call returns
 `{ ok: false, status, body }` for a 4xx or a documented 5xx: check `ok` and read
 `body.error.code` before using a result. When present, wait
@@ -247,6 +247,10 @@ means risk runs are off for this account; tell the user and start nothing.
    the next. A retry with the same key and request joins the run it started,
    up to 24 hours after that run ends. The same key with another request
    returns `409`, so use a new key for any other request.
+   Forecast quality is off by default. Set `request.include_forecast_quality`
+   to `true` only when the user asks for the historical forecast-quality check.
+   Omitted and `false` mean the same request; current risk and other sections
+   keep the history they need. The trust section states when it was not requested.
 6. A run takes minutes, and never more than an hour. Return after the start,
    then read it with `api.getRiskRun({ run_id })` in later `execute` calls,
    and read a `running` run again later. Do not loop inside one program. A
@@ -258,11 +262,20 @@ means risk runs are off for this account; tell the user and start nothing.
    going. Wait for one to end; never cancel a run you did not start. On an
    account others share, run one book at a time.
    `api.cancelRiskRun({ run_id })` stops a run the user no longer wants; a
-   stopped run keeps no result.
+   stopped run retains its terminal status for 24 hours, including after the
+   container sleeps. It has no completed full artifact.
 8. Return a short summary from the program, not the whole result: `summary`
    has the headline figures and what the run left out, and `view` says what
    it measured. Take only the figures you need from `component`; a `null`
    value was not computed, never zero. Clients cut or move large results.
+   Use `api.getRiskRunArtifact({ run_id })` for the complete output of a finished
+   successful or partial run during its 24-hour retention window. Read its
+   raw schema-version-2 analytics document for new runs. The successful run's
+   top-level `analytics` gives raw and stored sizes and SHA-256 hashes. Use
+   `Accept: application/gzip` and ranges of at most 4 MiB, check each 206
+   `Content-Range`, then verify compressed bytes, decompress in the workspace
+   and verify raw bytes. Publication failures fail the run. Old stored bodies
+   retain their earlier envelope until expiry.
 9. Say what the figures leave out: the gross weight of names that did not
    resolve, which the run counted as cash; `view.unmodelled` and
    `view.modelled_weight`; `view.dropped_peers` with their reasons; and every
